@@ -57,6 +57,8 @@ public:
                          RC_Channel&    servo_2,
                          RC_Channel&    servo_3,
                          RC_Channel&    servo_4,
+                         RC_Channel&    servo_5,
+                         RC_Channel&    servo_6,
                          uint16_t       loop_rate,
                          uint16_t       speed_hz = AP_MOTORS_HELI_SPEED_DEFAULT) :
         AP_MotorsHeli(loop_rate, speed_hz),
@@ -64,9 +66,9 @@ public:
         _swash_servo_1(servo_1),
         _swash_servo_2(servo_2),
         _swash_servo_3(servo_3),
-        _swash_servo_4(servo_1),
-        _swash_servo_5(servo_2),
-        _swash_servo_6(servo_3),
+        _swash_servo_4(servo_4),
+        _swash_servo_5(servo_5),
+        _swash_servo_6(servo_6),
         _main_rotor(servo_rsc, AP_MOTORS_HELI_SINGLE_RSC, loop_rate),
         _tail_rotor(servo_aux, AP_MOTORS_HELI_SINGLE_AUX, loop_rate)
     {

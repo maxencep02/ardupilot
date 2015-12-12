@@ -525,6 +525,12 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: HS4_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
     GGROUP(heli_servo_4,    "HS4_", RC_Channel),
+    // @Group: HS5_
+    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
+    GGROUP(heli_servo_5,    "HS5_", RC_Channel),
+    // @Group: HS6_
+    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
+    GGROUP(heli_servo_6,    "HS6_", RC_Channel),
     // @Group: H_RSC_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
     GGROUP(heli_servo_rsc,    "H_RSC_", RC_Channel),
