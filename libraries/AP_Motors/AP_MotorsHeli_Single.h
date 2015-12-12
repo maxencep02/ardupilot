@@ -20,6 +20,9 @@
 #define AP_MOTORS_HELI_SINGLE_SERVO1_POS                       -60
 #define AP_MOTORS_HELI_SINGLE_SERVO2_POS                       60
 #define AP_MOTORS_HELI_SINGLE_SERVO3_POS                       180
+#define AP_MOTORS_HELI_SINGLE_SERVO4_POS                       -60
+#define AP_MOTORS_HELI_SINGLE_SERVO5_POS                       60
+#define AP_MOTORS_HELI_SINGLE_SERVO6_POS                       180
 
 // swash type definitions
 #define AP_MOTORS_HELI_SINGLE_SWASH_CCPM                       0
@@ -61,7 +64,9 @@ public:
         _swash_servo_1(servo_1),
         _swash_servo_2(servo_2),
         _swash_servo_3(servo_3),
-        _yaw_servo(servo_4),
+        _swash_servo_4(servo_1),
+        _swash_servo_5(servo_2),
+        _swash_servo_6(servo_3),
         _main_rotor(servo_rsc, AP_MOTORS_HELI_SINGLE_RSC, loop_rate),
         _tail_rotor(servo_aux, AP_MOTORS_HELI_SINGLE_AUX, loop_rate)
     {
@@ -158,7 +163,9 @@ protected:
     RC_Channel&     _swash_servo_1;             // swash plate servo #1
     RC_Channel&     _swash_servo_2;             // swash plate servo #2
     RC_Channel&     _swash_servo_3;             // swash plate servo #3
-    RC_Channel&     _yaw_servo;                 // tail servo
+    RC_Channel&     _swash_servo_4;             // swash plate servo #4
+    RC_Channel&     _swash_servo_5;             // swash plate servo #5
+    RC_Channel&     _swash_servo_6;             // swash plate servo #6
 
     AP_MotorsHeli_RSC   _main_rotor;            // main rotor
     AP_MotorsHeli_RSC   _tail_rotor;            // tail rotor
@@ -174,7 +181,10 @@ protected:
     // parameters
     AP_Int16        _servo1_pos;                // Angular location of swash servo #1
     AP_Int16        _servo2_pos;                // Angular location of swash servo #2
-    AP_Int16        _servo3_pos;                // Angular location of swash servo #3    
+    AP_Int16        _servo3_pos;                // Angular location of swash servo #3   
+    AP_Int16        _servo4_pos;                // Angular location of swash servo #4
+    AP_Int16        _servo5_pos;                // Angular location of swash servo #5
+    AP_Int16        _servo6_pos;                // Angular location of swash servo #6     
     AP_Int16        _tail_type;                 // Tail type used: Servo, Servo with external gyro, direct drive variable pitch or direct drive fixed pitch
     AP_Int8         _swash_type;                // Swash Type Setting - either 3-servo CCPM or H1 Mechanical Mixing
     AP_Int16        _ext_gyro_gain_std;         // PWM sent to external gyro on ch7 when tail type is Servo w/ ExtGyro

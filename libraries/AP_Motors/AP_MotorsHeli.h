@@ -15,7 +15,7 @@
 #include "AP_MotorsHeli_RSC.h"
 
 // maximum number of swashplate servos
-#define AP_MOTORS_HELI_NUM_SWASHPLATE_SERVOS    3
+#define AP_MOTORS_HELI_NUM_SWASHPLATE_SERVOS    6
 
 // servo output rates
 #define AP_MOTORS_HELI_SPEED_DEFAULT            125     // default servo update rate for helicopters
@@ -234,6 +234,7 @@ protected:
     float           _collectiveFactor[AP_MOTORS_HELI_NUM_SWASHPLATE_SERVOS];
     float           _roll_scaler = 1;                // scaler to convert roll input from radio (i.e. -4500 ~ 4500) to max roll range
     float           _pitch_scaler = 1;               // scaler to convert pitch input from radio (i.e. -4500 ~ 4500) to max pitch range
+    float           _yaw_scaler = 1;                 // scaler to convert yaw input from radio (i.e. -4500 ~ 4500) to max yaw range
     float           _collective_scalar = 1;          // collective scalar to convert pwm form (i.e. 0 ~ 1000) passed in to actual servo range (i.e 1250~1750 would be 500)
     float           _main_rotor_power = 0;           // estimated main rotor power load, range 0-1.0f, used for RSC feedforward
     int16_t         _collective_out = 0;             // actual collective pitch value.  Required by the main code for calculating cruise throttle
