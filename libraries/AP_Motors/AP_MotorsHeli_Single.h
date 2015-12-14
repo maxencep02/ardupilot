@@ -17,12 +17,12 @@
 #define AP_MOTORS_HELI_SINGLE_AUX                              CH_7
 
 // servo position defaults
-#define AP_MOTORS_HELI_SINGLE_SERVO1_POS                       -60
-#define AP_MOTORS_HELI_SINGLE_SERVO2_POS                       60
-#define AP_MOTORS_HELI_SINGLE_SERVO3_POS                       180
-#define AP_MOTORS_HELI_SINGLE_SERVO4_POS                       -60
-#define AP_MOTORS_HELI_SINGLE_SERVO5_POS                       60
-#define AP_MOTORS_HELI_SINGLE_SERVO6_POS                       180
+#define AP_MOTORS_HELI_SINGLE_SERVO1_POS                       0
+#define AP_MOTORS_HELI_SINGLE_SERVO2_POS                       120
+#define AP_MOTORS_HELI_SINGLE_SERVO3_POS                       -120
+#define AP_MOTORS_HELI_SINGLE_SERVO4_POS                       0
+#define AP_MOTORS_HELI_SINGLE_SERVO5_POS                       120
+#define AP_MOTORS_HELI_SINGLE_SERVO6_POS                       -120
 
 // swash type definitions
 #define AP_MOTORS_HELI_SINGLE_SWASH_CCPM                       0
