@@ -96,6 +96,12 @@ void DataFlash_File::Init()
     int ret;
     struct stat st;
 
+    semaphore = hal.util->new_semaphore();
+    if (semaphore == nullptr) {
+        hal.console->printf("Failed to create DataFlash_File semaphore\n");
+        return;
+    }
+    
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // try to cope with an existing lowercase log directory
     // name. NuttX does not handle case insensitive VFAT well
@@ -143,7 +149,7 @@ void DataFlash_File::Init()
       until we can allocate it
      */
     while (_writebuf == NULL && _writebuf_size >= _writebuf_chunk) {
-        hal.console->printf("DataFlash_File: buffer size=%d\n", _writebuf_size);
+        hal.console->printf("DataFlash_File: buffer size=%u\n", (unsigned)_writebuf_size);
         _writebuf = (uint8_t *)malloc(_writebuf_size);
         if (_writebuf == NULL) {
             _writebuf_size /= 2;
@@ -437,8 +443,13 @@ bool DataFlash_File::WritePrioritisedBlock(const void *pBuffer, uint16_t size, b
         return false;
     }
 
+    if (!semaphore->take(1)) {
+        return false;
+    }
+    
     if (! WriteBlockCheckStartupMessages()) {
         _dropped++;
+        semaphore->give();
         return false;
     }
 
@@ -453,12 +464,14 @@ bool DataFlash_File::WritePrioritisedBlock(const void *pBuffer, uint16_t size, b
         // things:
         if (space < non_messagewriter_message_reserved_space()) {
             // this message isn't dropped, it will be sent again...
+            semaphore->give();
             return false;
         }
     } else {
         // we reserve some amount of space for critical messages:
         if (!is_critical && space < critical_message_reserved_space()) {
             _dropped++;
+            semaphore->give();
             return false;
         }
     }
@@ -467,6 +480,7 @@ bool DataFlash_File::WritePrioritisedBlock(const void *pBuffer, uint16_t size, b
     if (space < size) {
         hal.util->perf_count(_perf_overruns);
         _dropped++;
+        semaphore->give();
         return false;
     }
 
@@ -490,6 +504,7 @@ bool DataFlash_File::WritePrioritisedBlock(const void *pBuffer, uint16_t size, b
             BUF_ADVANCETAIL(_writebuf, n);
         }
     }
+    semaphore->give();
     return true;
 }
 
@@ -657,13 +672,26 @@ int16_t DataFlash_File::get_log_data(const uint16_t list_entry, const uint16_t p
     */
     if (ofs / 4096 != (ofs+len) / 4096) {
         off_t seek_current = ::lseek(_read_fd, 0, SEEK_CUR);
+        if (seek_current == (off_t)-1) {
+            close(_read_fd);
+            _read_fd = -1;
+            return -1;
+        }
         if (seek_current != (off_t)_read_offset) {
-            ::lseek(_read_fd, _read_offset, SEEK_SET);
+            if (::lseek(_read_fd, _read_offset, SEEK_SET) == (off_t)-1) {
+                close(_read_fd);
+                _read_fd = -1;
+                return -1;
+            }
         }
     }
 
     if (ofs != _read_offset) {
-        ::lseek(_read_fd, ofs, SEEK_SET);
+        if (::lseek(_read_fd, ofs, SEEK_SET) == (off_t)-1) {
+            close(_read_fd);
+            _read_fd = -1;
+            return -1;
+        }
         _read_offset = ofs;
     }
     int16_t ret = (int16_t)::read(_read_fd, data, len);
@@ -760,6 +788,9 @@ uint16_t DataFlash_File::start_new_log(void)
         log_num = 1;
     }
     char *fname = _log_file_name(log_num);
+    if (fname == NULL) {
+        return 0xFFFF;
+    }
     _write_fd = ::open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666);
     _cached_oldest_log = 0;
 
@@ -783,6 +814,10 @@ uint16_t DataFlash_File::start_new_log(void)
     // now update lastlog.txt with the new log number
     fname = _lastlog_file_name();
     FILE *f = ::fopen(fname, "w");
+    if (f == NULL) {
+        free(fname);
+        return 0xFFFF;
+    }
     fprintf(f, "%u\r\n", (unsigned)log_num);
     fclose(f);    
     free(fname);
@@ -824,7 +859,11 @@ void DataFlash_File::LogReadProcess(const uint16_t list_entry,
     _read_fd_log_num = log_num;
     _read_offset = 0;
     if (start_page != 0) {
-        ::lseek(_read_fd, start_page * DATAFLASH_PAGE_SIZE, SEEK_SET);
+        if (::lseek(_read_fd, start_page * DATAFLASH_PAGE_SIZE, SEEK_SET) == (off_t)-1) {
+            close(_read_fd);
+            _read_fd = -1;
+            return;
+        }
         _read_offset = start_page * DATAFLASH_PAGE_SIZE;
     }
 
@@ -858,9 +897,14 @@ void DataFlash_File::LogReadProcess(const uint16_t list_entry,
                 log_step = 0;
                 _print_log_entry(data, print_mode, port);
                 log_counter++;
+                // work around NuttX bug (see above for explanation)
                 if (log_counter == 10) {
                     log_counter = 0;
-                    ::lseek(_read_fd, 0, SEEK_CUR);
+                    if (::lseek(_read_fd, 0, SEEK_CUR) == (off_t)-1) {
+                        close(_read_fd);
+                        _read_fd = -1;
+                        return;
+                    }
                 }
                 break;
         }

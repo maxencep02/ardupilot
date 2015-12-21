@@ -20,6 +20,7 @@
 #include "GCS.h"
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_HAL/AP_HAL.h>
+#include <AP_OpticalFlow/AP_OpticalFlow.h>
 #include <AP_Vehicle/AP_Vehicle.h>
 
 extern const AP_HAL::HAL& hal;
@@ -664,8 +665,8 @@ bool GCS_MAVLINK::handle_mission_item(mavlink_message_t *msg, AP_Mission &missio
     mavlink_msg_mission_item_decode(msg, &packet);
 
     // convert mavlink packet to mission command
-    if (!AP_Mission::mavlink_to_mission_cmd(packet, cmd)) {
-        result = MAV_MISSION_INVALID;
+    result = AP_Mission::mavlink_to_mission_cmd(packet, cmd);
+    if (result != MAV_MISSION_ACCEPTED) {
         goto mission_ack;
     }
 
