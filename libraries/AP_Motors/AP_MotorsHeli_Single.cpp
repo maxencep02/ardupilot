@@ -478,12 +478,12 @@ void AP_MotorsHeli_Single::move_actuators(int16_t roll_out, int16_t pitch_out, i
     _main_rotor.set_motor_load(_main_rotor_power);
 
     // swashplate servos
-    _swash_servo_1.servo_out = (_rollFactor[CH_1] * roll_out + _pitchFactor[CH_1] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_1] * coll_out_scaled + (_swash_servo_1.radio_trim-1500);
-    _swash_servo_2.servo_out = (_rollFactor[CH_2] * roll_out + _pitchFactor[CH_2] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_2] * coll_out_scaled + (_swash_servo_2.radio_trim-1500);
-    _swash_servo_3.servo_out = (_rollFactor[CH_3] * roll_out + _pitchFactor[CH_3] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_3] * coll_out_scaled + (_swash_servo_3.radio_trim-1500);   
-    _swash_servo_4.servo_out = (_rollFactor[CH_4] * roll_out + _pitchFactor[CH_4] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_4] * coll_out_scaled + (_swash_servo_4.radio_trim-1500);
-    _swash_servo_5.servo_out = (_rollFactor[CH_5] * roll_out + _pitchFactor[CH_5] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_5] * coll_out_scaled + (_swash_servo_5.radio_trim-1500);
-    _swash_servo_6.servo_out = (_rollFactor[CH_6] * roll_out + _pitchFactor[CH_6] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_6] * coll_out_scaled + (_swash_servo_6.radio_trim-1500);   
+    _swash_servo_1.servo_out = (-_rollFactor[CH_1] * roll_out + _pitchFactor[CH_1] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_1] * coll_out_scaled + (_swash_servo_1.radio_trim-1500);
+    _swash_servo_2.servo_out = (-_rollFactor[CH_2] * roll_out + _pitchFactor[CH_2] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_2] * coll_out_scaled + (_swash_servo_2.radio_trim-1500);
+    _swash_servo_3.servo_out = (-_rollFactor[CH_3] * roll_out + _pitchFactor[CH_3] * pitch_out - yaw_out)/10 + _collectiveFactor[CH_3] * coll_out_scaled + (_swash_servo_3.radio_trim-1500);   
+    _swash_servo_4.servo_out = (_rollFactor[CH_4] * roll_out + _pitchFactor[CH_4] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_4] * coll_out_scaled + (_swash_servo_4.radio_trim-1500);
+    _swash_servo_5.servo_out = (_rollFactor[CH_5] * roll_out + _pitchFactor[CH_5] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_5] * coll_out_scaled + (_swash_servo_5.radio_trim-1500);
+    _swash_servo_6.servo_out = (_rollFactor[CH_6] * roll_out + _pitchFactor[CH_6] * pitch_out + yaw_out)/10 + _collectiveFactor[CH_6] * coll_out_scaled + (_swash_servo_6.radio_trim-1500);   
 
     // use servo_out to calculate pwm_out and radio_out
     _swash_servo_1.calc_pwm();
