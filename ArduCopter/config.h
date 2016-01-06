@@ -213,6 +213,10 @@
  # define FS_GCS_TIMEOUT_MS             5000    // gcs failsafe triggers after 5 seconds with no GCS heartbeat
 #endif
 
+#ifndef GNDEFFECT_COMPENSATION
+ # define GNDEFFECT_COMPENSATION          DISABLED
+#endif
+
 // possible values for FS_GCS parameter
 #define FS_GCS_DISABLED                     0
 #define FS_GCS_ENABLED_ALWAYS_RTL           1
@@ -230,6 +234,10 @@
 
 #ifndef FS_CLOSE_TO_HOME_CM
  # define FS_CLOSE_TO_HOME_CM               500 // if vehicle within 5m of home, vehicle will LAND instead of RTL during some failsafes
+#endif
+
+#ifndef PREARM_DISPLAY_PERIOD
+# define PREARM_DISPLAY_PERIOD 30
 #endif
 
 // pre-arm baro vs inertial nav max alt disparity

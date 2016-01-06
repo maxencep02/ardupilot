@@ -47,6 +47,7 @@
 #include <AP_Math/AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 #include <AP_ADC/AP_ADC.h>         // ArduPilot Mega Analog to Digital Converter Library
 #include <AP_InertialSensor/AP_InertialSensor.h> // Inertial Sensor Library
+#include <AP_AccelCal/AP_AccelCal.h>                // interface and maths for accelerometer calibration
 #include <AP_AHRS/AP_AHRS.h>         // ArduPilot Mega DCM Library
 #include <RC_Channel/RC_Channel.h>     // RC Channel Library
 #include <AP_RangeFinder/AP_RangeFinder.h>     // Range finder library
@@ -145,9 +146,6 @@ private:
     // key aircraft parameters passed to multiple libraries
     AP_Vehicle::FixedWing aparm;
     AP_HAL::BetterStream* cliSerial;
-
-    // the rate we run the main loop 
-    const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
 
     // Global parameters are all contained within the 'g' class.
     Parameters g;
@@ -498,13 +496,19 @@ private:
     struct {
         // on hard landings, only check once after directly a landing so you
         // don't trigger a crash when picking up the aircraft
-        bool checkHardLanding:1;
+        bool checkedHardLanding:1;
 
         // crash detection. True when we are crashed
         bool is_crashed:1;
 
+        // impact detection flag. Expires after a few seconds via impact_timer_ms
+        bool impact_detected:1;
+
         // debounce timer
         uint32_t debounce_timer_ms;
+
+        // length of time impact_detected has been true. Times out after a few seconds. Used to clip isFlyingProbability
+        uint32_t impact_timer_ms;
     } crash_state;
 
     // true if we are in an auto-throttle mode, which means
@@ -562,8 +566,11 @@ private:
     AP_ADSB adsb {ahrs};
     struct {
 
-        // for Loiter_and_descend behavior, keeps track of rate changes
-        uint32_t time_last_alt_change_ms;
+        // flag to signify the current mode is set by ADSB evasion logic
+        bool is_evading:1;
+
+        // generic timestamp for evasion algorithms
+        uint32_t timestamp_ms;
 
         // previous wp to restore to when switching between modes back to AUTO
         Location prev_wp;
@@ -704,6 +711,7 @@ private:
 
     // time that rudder arming has been running
     uint32_t rudder_arm_timer;
+
 
     void demo_servos(uint8_t i);
     void adjust_nav_pitch_throttle(void);
@@ -921,7 +929,9 @@ private:
     void update_logging2(void);
     void terrain_update(void);
     void adsb_update(void);
-    void adsb_handle_vehicle_threats(void);
+    bool adsb_evasion_start(void);
+    void adsb_evasion_stop(void);
+    void adsb_evasion_ongoing(void);
     void update_flight_mode(void);
     void stabilize();
     void set_servos_idle(void);
@@ -929,6 +939,7 @@ private:
     void update_aux();
     void update_is_flying_5Hz(void);
     void crash_detection_update(void);
+    bool in_preLaunch_flight_stage(void);
     void gcs_send_text_fmt(MAV_SEVERITY severity, const char *fmt, ...);
     void handle_auto_mode(void);
     void calc_throttle();
@@ -985,11 +996,11 @@ private:
     void init_capabilities(void);
     void dataflash_periodic(void);
     uint16_t throttle_min(void) const;
-    
     void do_parachute(const AP_Mission::Mission_Command& cmd);
     void parachute_check();
     void parachute_release();
     bool parachute_manual_release();
+    void accel_cal_update(void);
 
 public:
     void mavlink_delay_cb();

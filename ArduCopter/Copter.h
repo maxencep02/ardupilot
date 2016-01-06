@@ -50,7 +50,7 @@
 #include <AP_Baro/AP_Baro.h>
 #include <AP_Compass/AP_Compass.h>         // ArduPilot Mega Magnetometer Library
 #include <AP_Math/AP_Math.h>            // ArduPilot Mega Vector/Matrix math Library
-#include <AP_Curve/AP_Curve.h>           // Curve used to linearlise throttle pwm to thrust
+#include <AP_AccelCal/AP_AccelCal.h>                // interface and maths for accelerometer calibration
 #include <AP_InertialSensor/AP_InertialSensor.h>  // ArduPilot Mega Inertial Sensor (accel & gyro) Library
 #include <AP_AHRS/AP_AHRS.h>
 #include <AP_NavEKF/AP_NavEKF.h>
@@ -165,9 +165,6 @@ private:
 
     // Dataflash
     DataFlash_Class DataFlash{FIRMWARE_STRING};
-
-    // the rate we run the main loop at
-    const AP_InertialSensor::Sample_rate ins_sample_rate;
 
     AP_GPS gps;
 
@@ -543,6 +540,16 @@ private:
     } heli_flags;
 #endif
 
+#if GNDEFFECT_COMPENSATION == ENABLED
+    // ground effect detector
+    struct {
+        bool takeoff_expected;
+        bool touchdown_expected;
+        uint32_t takeoff_time_ms;
+        float takeoff_alt_cm;
+    } gndeffect_state;
+#endif // GNDEFFECT_COMPENSATION == ENABLED
+
     static const AP_Scheduler::Task scheduler_tasks[];
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
@@ -845,6 +852,9 @@ private:
     void update_land_and_crash_detectors();
     void update_land_detector();
     void update_throttle_thr_mix();
+#if GNDEFFECT_COMPENSATION == ENABLED
+    void update_ground_effect_detector(void);
+#endif // GNDEFFECT_COMPENSATION == ENABLED
     void landinggear_update();
     void update_notify();
     void motor_test_output();
@@ -854,6 +864,8 @@ private:
     void arm_motors_check();
     void auto_disarm_check();
     bool init_arm_motors(bool arming_from_gcs);
+    void update_arming_checks(void);
+    bool all_arming_checks_passing(bool arming_from_gcs);
     bool pre_arm_checks(bool display_failure);
     void pre_arm_rc_checks();
     bool pre_arm_gps_checks(bool display_failure);
@@ -992,6 +1004,7 @@ private:
     void run_cli(AP_HAL::UARTDriver *port);
     void init_capabilities(void);
     void dataflash_periodic(void);
+    void accel_cal_update(void);
 
 public:
     void mavlink_delay_cb();

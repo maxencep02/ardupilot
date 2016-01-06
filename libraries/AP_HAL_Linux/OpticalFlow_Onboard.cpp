@@ -79,15 +79,19 @@ void OpticalFlow_Onboard::init(AP_HAL::OpticalFlow::Gyro_Cb get_gyro)
     crop_width = HAL_OPTFLOW_ONBOARD_CROP_WIDTH;
     crop_height = HAL_OPTFLOW_ONBOARD_CROP_HEIGHT;
     top = 0;
-    /* make the image square by cropping in the center */
-    left = (HAL_OPTFLOW_ONBOARD_OUTPUT_WIDTH -
-            HAL_OPTFLOW_ONBOARD_OUTPUT_HEIGHT) / 2;
+    /* make the image square by cropping to YxY, removing the lateral edges */
+    left = (HAL_OPTFLOW_ONBOARD_SENSOR_WIDTH -
+            HAL_OPTFLOW_ONBOARD_SENSOR_HEIGHT) / 2;
     _format = V4L2_PIX_FMT_NV12;
 
     if (device_path == NULL ||
         !_videoin->open_device(device_path, memtype)) {
         AP_HAL::panic("OpticalFlow_Onboard: couldn't open "
                       "video device");
+    }
+
+    if (!_videoin->set_crop(left, top, crop_width, crop_height)) {
+        AP_HAL::panic("OpticalFlow_Onboard: couldn't set video crop");
     }
 
     if (!_videoin->set_format(&_width, &_height, &_format, &_bytesperline,
@@ -98,10 +102,6 @@ void OpticalFlow_Onboard::init(AP_HAL::OpticalFlow::Gyro_Cb get_gyro)
 
     if (_format != V4L2_PIX_FMT_NV12 && _format != V4L2_PIX_FMT_GREY) {
         AP_HAL::panic("OpticalFlow_Onboard: planar or monochrome format needed");
-    }
-
-    if (!_videoin->set_crop(left, top, crop_width, crop_height)) {
-        AP_HAL::panic("OpticalFlow_Onboard: couldn't set video crop");
     }
 
     if (!_videoin->allocate_buffers(nbufs)) {

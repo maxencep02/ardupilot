@@ -16,6 +16,14 @@
 #include <errno.h>
 #include <sys/mman.h>
 
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_QFLIGHT
+#include <rpcmem.h>
+#include <AP_HAL_Linux/qflight/qflight_util.h>
+#include <AP_HAL_Linux/qflight/qflight_dsp.h>
+#include <AP_HAL_Linux/qflight/qflight_buffer.h>
+#endif
+
+
 using namespace Linux;
 
 extern const AP_HAL::HAL& hal;
@@ -29,7 +37,8 @@ extern const AP_HAL::HAL& hal;
 
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO ||    \
     CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLEBRAIN2 || \
-    CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BH
+    CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BH || \
+    CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXFMINI
 #define APM_LINUX_UART_PERIOD           10000
 #define APM_LINUX_RCIN_PERIOD           500
 #define APM_LINUX_TONEALARM_PERIOD      10000
@@ -261,7 +270,13 @@ void *Scheduler::_timer_thread(void* arg)
     while (sched->system_initializing()) {
         poll(NULL, 0, 1);
     }
-    /*
+
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_QFLIGHT
+    printf("Initialising rpcmem\n");
+    rpcmem_init();
+#endif
+    
+/*
       this aims to run at an average of 1kHz, so that it can be used
       to drive 1kHz processes without drift
      */
@@ -277,6 +292,16 @@ void *Scheduler::_timer_thread(void* arg)
         next_run_usec += 1000;
         // run registered timers
         sched->_run_timers(true);
+
+#if HAL_LINUX_UARTS_ON_TIMER_THREAD
+        /*
+          some boards require that UART calls happen on the same
+          thread as other calls of the same time. This impacts the
+          QFLIGHT calls where UART output is an RPC call to the DSPs
+         */
+        _run_uarts();
+        RCInput::from(hal.rcin)->_timer_tick();
+#endif
     }
     return NULL;
 }
@@ -306,9 +331,31 @@ void *Scheduler::_rcin_thread(void *arg)
     }
     while (true) {
         sched->_microsleep(APM_LINUX_RCIN_PERIOD);
+#if !HAL_LINUX_UARTS_ON_TIMER_THREAD
         RCInput::from(hal.rcin)->_timer_tick();
+#endif
     }
     return NULL;
+}
+
+
+/*
+  run timers for all UARTs
+ */
+void Scheduler::_run_uarts(void)
+{
+    // process any pending serial bytes
+    UARTDriver::from(hal.uartA)->_timer_tick();
+    UARTDriver::from(hal.uartB)->_timer_tick();
+#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_RASPILOT
+    //SPI UART not use SPI
+    if (RPIOUARTDriver::from(hal.uartC)->isExternal()) {
+        RPIOUARTDriver::from(hal.uartC)->_timer_tick();
+    }
+#else
+    UARTDriver::from(hal.uartC)->_timer_tick();
+#endif
+    UARTDriver::from(hal.uartE)->_timer_tick();
 }
 
 void *Scheduler::_uart_thread(void* arg)
@@ -320,19 +367,9 @@ void *Scheduler::_uart_thread(void* arg)
     }
     while (true) {
         sched->_microsleep(APM_LINUX_UART_PERIOD);
-
-        // process any pending serial bytes
-        UARTDriver::from(hal.uartA)->_timer_tick();
-        UARTDriver::from(hal.uartB)->_timer_tick();
-#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_RASPILOT
-        //SPI UART not use SPI
-        if (RPIOUARTDriver::from(hal.uartC)->isExternal()) {
-            RPIOUARTDriver::from(hal.uartC)->_timer_tick();
-        }
-#else
-        UARTDriver::from(hal.uartC)->_timer_tick();
+#if !HAL_LINUX_UARTS_ON_TIMER_THREAD
+        _run_uarts();
 #endif
-        UARTDriver::from(hal.uartE)->_timer_tick();
     }
     return NULL;
 }

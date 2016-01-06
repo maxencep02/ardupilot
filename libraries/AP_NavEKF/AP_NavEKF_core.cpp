@@ -226,7 +226,7 @@ bool NavEKF_core::InitialiseFilterDynamic(void)
     InitialiseVariables();
 
     // get initial time deltat between IMU measurements (sec)
-    dtDelAng = dtIMUavg = 1.0f/_ahrs->get_ins().get_sample_rate();
+    dtDelAng = dtIMUavg = _ahrs->get_ins().get_loop_delta_t();
 
     // set number of updates over which gps and baro measurements are applied to the velocity and position states
     gpsUpdateCountMaxInv = (dtIMUavg * 1000.0f)/float(msecGpsAvg);
@@ -288,7 +288,7 @@ bool NavEKF_core::InitialiseFilterBootstrap(void)
     InitialiseVariables();
 
     // get initial time deltat between IMU measurements (sec)
-    dtDelAng = dtIMUavg = 1.0f/_ahrs->get_ins().get_sample_rate();
+    dtDelAng = dtIMUavg = _ahrs->get_ins().get_loop_delta_t();
 
     // set number of updates over which gps and baro measurements are applied to the velocity and position states
     gpsUpdateCountMaxInv = (dtIMUavg * 1000.0f)/float(msecGpsAvg);
@@ -920,7 +920,7 @@ void NavEKF_core::UpdateStrapdownEquationsNED()
 }
 
 // calculate the predicted state covariance matrix
-void NavEKF_core::CovariancePrediction()
+void NavEKF_core::CovariancePrediction() OPT_MATHS
 {
     hal.util->perf_begin(_perf_CovariancePrediction);
     float windVelSigma; // wind velocity 1-sigma process noise - m/s
@@ -1881,8 +1881,8 @@ void NavEKF_core::FuseVelPosNED()
                 } else {
                     innovVelPos[obsIndex] = statesAtHgtTime.position[obsIndex-3] - observation[obsIndex];
                     if (obsIndex == 5) {
-                        static const float gndMaxBaroErr = 4.0f;
-                        static const float gndBaroInnovFloor = -0.5f;
+                        const float gndMaxBaroErr = 4.0f;
+                        const float gndBaroInnovFloor = -0.5f;
 
                         if(getTouchdownExpected()) {
                             // when a touchdown is expected, floor the barometer innovation at gndBaroInnovFloor
@@ -3824,7 +3824,7 @@ void NavEKF_core::readIMUData()
     const AP_InertialSensor &ins = _ahrs->get_ins();
 
     // calculate the average time between IMU updates
-    dtIMUavg = 1.0f/(float)ins.get_sample_rate();
+    dtIMUavg = ins.get_loop_delta_t();
 
     // calculate the most recent time between gyro delta angle updates
     if (ins.get_delta_time() > 0.0f) {

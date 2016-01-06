@@ -563,11 +563,9 @@ const AP_Param::Info Copter::var_info[] = {
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_8,    "RC8_", RC_Channel_aux),
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // @Group: RC9_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_9,                    "RC9_", RC_Channel_aux),
-#endif
 
     // @Group: RC10_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
@@ -576,7 +574,6 @@ const AP_Param::Info Copter::var_info[] = {
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_11,                    "RC11_", RC_Channel_aux),
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // @Group: RC12_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_12,                   "RC12_", RC_Channel_aux),
@@ -588,7 +585,6 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: RC14_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_14,                   "RC14_", RC_Channel_aux),
-#endif
 
     // @Param: RC_SPEED
     // @DisplayName: ESC Update Speed
@@ -848,28 +844,6 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Standard
     GGROUP(p_pos_xy,                "POS_XY_", AC_P),
 
-#if PRECISION_LANDING == ENABLED
-     // @Param: PRECLNDVEL_P
-     // @DisplayName: Precision landing velocity controller P gain
-     // @Description: Precision landing velocity controller P gain
-     // @Range: 0.100 5.000
-     // @User: Advanced
-
-     // @Param: PRECLNDVEL_I
-     // @DisplayName: Precision landing velocity controller I gain
-     // @Description: Precision landing velocity controller I gain
-     // @Range: 0.100 5.000
-     // @User: Advanced
-
-     // @Param: PRECLNDVEL_IMAX
-     // @DisplayName: Precision landing velocity controller I gain maximum
-     // @Description: Precision landing velocity controller I gain maximum
-     // @Range: 0 1000
-     // @Units: cm/s
-     // @User: Standard
-     GGROUP(pi_precland,            "PLAND_", AC_PI_2D),
-#endif
-
     // variables not in the g class which contain EEPROM saved variables
 
 #if CAMERA == ENABLED
@@ -1090,7 +1064,7 @@ const AP_Param::Info Copter::var_info[] = {
 #if PRECISION_LANDING == ENABLED
     // @Group: PRECLAND_
     // @Path: ../libraries/AC_PrecLand/AC_PrecLand.cpp
-    GOBJECT(precland, "PLAND_", AC_PrecLand),
+    GOBJECT(precland, "PLND_", AC_PrecLand),
 #endif
 
     // @Group: RPM
@@ -1122,6 +1096,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Range: 0.001 0.006
     // @User: Standard
     GSCALAR(autotune_min_d, "AUTOTUNE_MIN_D", 0.001f),
+
+    // @Group: NTF_
+    // @Path: ../libraries/AP_Notify/AP_Notify.cpp
+    GOBJECT(notify, "NTF_",  AP_Notify),
 
     AP_VAREND
 };

@@ -69,8 +69,9 @@ public:
         _swash_servo_4(servo_4),
         _swash_servo_5(servo_5),
         _swash_servo_6(servo_6),
-        _main_rotor(servo_rsc, AP_MOTORS_HELI_SINGLE_RSC, loop_rate),
-        _tail_rotor(servo_aux, AP_MOTORS_HELI_SINGLE_AUX, loop_rate)
+        _main_rotor(RC_Channel_aux::k_heli_rsc, AP_MOTORS_HELI_SINGLE_RSC, loop_rate),
+        _tail_rotor(RC_Channel_aux::k_heli_tail_rsc, AP_MOTORS_HELI_SINGLE_AUX, loop_rate)
+
     {
         AP_Param::setup_object_defaults(this, var_info);
     };

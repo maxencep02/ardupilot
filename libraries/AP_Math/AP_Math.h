@@ -68,7 +68,6 @@
 #define WGS84_E (sqrt(2*WGS84_F - WGS84_F*WGS84_F))
 
 // define AP_Param types AP_Vector3f and Ap_Matrix3f
-AP_PARAMDEFV(Matrix3f, Matrix3f, AP_PARAM_MATRIX3F);
 AP_PARAMDEFV(Vector3f, Vector3f, AP_PARAM_VECTOR3F);
 
 // are two floats equal
@@ -114,6 +113,9 @@ bool                    inverse3x3(float m[], float invOut[]);
 
 // invOut is an inverted 3x3 matrix when returns true, otherwise matrix is Singular
 bool                    inverse4x4(float m[],float invOut[]);
+
+// matrix multiplication of two NxN matrices
+float* mat_mul(float *A, float *B, uint8_t n);
 
 // see if location is past a line perpendicular to
 // the line between point1 and point2. If point1 is

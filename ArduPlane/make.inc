@@ -1,5 +1,4 @@
 LIBRARIES += AP_Common
-LIBRARIES += AP_Progmem
 LIBRARIES += AP_Menu
 LIBRARIES += AP_Param
 LIBRARIES += StorageManager
@@ -9,6 +8,7 @@ LIBRARIES += AP_Compass
 LIBRARIES += AP_Math
 LIBRARIES += AP_ADC
 LIBRARIES += AP_InertialSensor
+LIBRARIES += AP_AccelCal
 LIBRARIES += AP_AHRS
 LIBRARIES += RC_Channel
 LIBRARIES += AP_RangeFinder
