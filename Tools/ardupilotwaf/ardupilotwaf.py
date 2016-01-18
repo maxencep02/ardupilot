@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 from __future__ import print_function
-from waflib import Logs, Utils
+from waflib import Logs, Options, Utils
 
 SOURCE_EXTS = [
     '*.S',
@@ -74,7 +74,10 @@ def get_all_libraries(bld):
     libraries.extend(['AP_HAL', 'AP_HAL_Empty'])
     return libraries
 
-def program(bld, **kw):
+def program(bld, blddestdir='bin',
+            use_legacy_defines=True,
+            program_name=None,
+            **kw):
     if 'target' in kw:
         bld.fatal('Do not pass target for program')
     if 'defines' not in kw:
@@ -82,15 +85,25 @@ def program(bld, **kw):
     if 'source' not in kw:
         kw['source'] = bld.path.ant_glob(SOURCE_EXTS)
 
-    name = bld.path.name
-    kw['defines'].extend(_get_legacy_defines(name))
+    if not program_name:
+        program_name = bld.path.name
 
-    target = bld.bldnode.make_node(name + '.' + bld.env.BOARD)
+    if use_legacy_defines:
+        kw['defines'].extend(_get_legacy_defines(program_name))
+
+    kw['features'] = common_features(bld) + kw.get('features', [])
+
+    target = blddestdir + '/' + program_name
+
     bld.program(
         target=target,
-        name=name,
+        name=target,
         **kw
     )
+
+def example(bld, **kw):
+    kw['blddestdir'] = 'examples'
+    program(bld, **kw)
 
 # NOTE: Code in libraries/ is compiled multiple times. So ensure each
 # compilation is independent by providing different index for each.
@@ -102,6 +115,12 @@ def _get_next_idx():
     global LAST_IDX
     LAST_IDX += 1
     return LAST_IDX
+
+def common_features(bld):
+    features = []
+    if bld.env.STATIC_LINKING:
+        features.append('static_linking')
+    return features
 
 def vehicle_stlib(bld, **kw):
     if 'name' not in kw:
@@ -121,23 +140,20 @@ def vehicle_stlib(bld, **kw):
         lib_sources = lib_node.ant_glob(SOURCE_EXTS + UTILITY_SOURCE_EXTS)
         sources.extend(lib_sources)
 
-    name = kw['name']
-    vehicle = kw['vehicle']
+    kw['source'] = sources
+    kw['target'] = kw['name']
+    kw['defines'] = _get_legacy_defines(kw['vehicle'])
+    kw['idx'] = _get_next_idx()
 
-    bld.stlib(
-        source=sources,
-        target=name,
-        defines=_get_legacy_defines(vehicle),
-        idx=_get_next_idx(),
-    )
+    bld.stlib(**kw)
 
 def find_tests(bld, use=[]):
     if not bld.env.HAS_GTEST:
         return
 
-    features = ''
+    features = common_features(bld)
     if bld.cmd == 'check':
-        features='test'
+        features.append('test')
 
     use = Utils.to_list(use)
     use.append('GTEST')
@@ -145,13 +161,15 @@ def find_tests(bld, use=[]):
     includes = [bld.srcnode.abspath() + '/tests/']
 
     for f in bld.path.ant_glob(incl='*.cpp'):
-        target = f.change_ext('.' + bld.env.BOARD)
-        bld.program(
+        program(
+            bld,
             features=features,
-            target=target,
             includes=includes,
             source=[f],
             use=use,
+            program_name=f.change_ext('').name,
+            blddestdir='tests',
+            use_legacy_defines=False,
         )
 
 def find_benchmarks(bld, use=[]):
@@ -161,13 +179,15 @@ def find_benchmarks(bld, use=[]):
     includes = [bld.srcnode.abspath() + '/benchmarks/']
 
     for f in bld.path.ant_glob(incl='*.cpp'):
-        target = f.change_ext('.' + bld.env.BOARD)
-        bld.program(
-            features=['gbenchmark'],
-            target=target,
+        program(
+            bld,
+            features=common_features(bld) + ['gbenchmark'],
             includes=includes,
             source=[f],
             use=use,
+            program_name=f.change_ext('').name,
+            blddestdir='benchmarks',
+            use_legacy_defines=False,
         )
 
 def test_summary(bld):
@@ -211,3 +231,15 @@ def test_summary(bld):
 
     for filename in fails:
         Logs.error('    %s' % filename)
+
+def build_shortcut(targets=None):
+    def build_fn(bld):
+        if targets:
+            if Options.options.targets:
+                Options.options.targets += ',' + targets
+            else:
+                Options.options.targets = targets
+
+        Options.commands = ['build'] + Options.commands
+
+    return build_fn
